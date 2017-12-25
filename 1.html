@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>First</title>
+<script src="../games_resources/libs/three.js-87/build/three.min.js"></script>
+</head>
+<body>
+<script>
+	function StrangeFunc ()
+	{
+		var RetVar = Math.random();
+		if(Math.round(Math.random()) == 0)
+		{
+			return -1*RetVar;
+		}
+		return RetVar;
+	}
+
+	var Container = document.createElement("div");
+	Container.style.height = window.innerHeight+"px";
+	Container.style.width = window.innerWidth + "px";
+
+	document.body.appendChild(Container);
+	var Renderer = new THREE.WebGLRenderer();
+	Renderer.setSize(window.innerWidth, window.innerHeight);
+	Container.appendChild(Renderer.domElement);
+
+	var Camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 1000);
+	var Scene = new THREE.Scene();
+
+	var Geometry = new THREE.SphereGeometry(5, 32, 32);
+	var Material = new THREE.MeshBasicMaterial({color: 0xffffce});
+
+	var SphereMesh = new THREE.Mesh(Geometry, Material);
+
+	var Room = new THREE.Mesh(
+		new THREE.BoxBufferGeometry(1000, 1000, 1000), 
+		new THREE.MeshBasicMaterial({color :0xffffce, side: THREE.DoubleSide})
+	);
+
+	var PathVectors = [];
+	for (var i=0; i<10; i++)
+	{
+		var Point = new THREE.Mesh(
+			new THREE.SphereGeometry(5, 32, 32),
+			new THREE.MeshBasicMaterial({color: 0x2194ce})
+		);
+
+		Point.position = new THREE.Vector3(
+			StrangeFunc()*Room.geometry.width/2,
+			StrangeFunc()*Room.geometry.height/2,
+			StrangeFunc()*Room.geometry.depth/2
+		);
+
+		Scene.add(Point);
+
+	}
+
+	Scene.add(Room);
+	Scene.add(SphereMesh);
+	Scene.add(Camera);
+
+	Camera.position.set(0,0, 10);
+	function animate(time) {
+
+		Renderer.render(Scene, Camera);
+		requestAnimationFrame(animate);
+	}
+	animate();
+</script>
+</body>
+</html>
