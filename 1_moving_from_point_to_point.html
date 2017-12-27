@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Movement From Point To Point </title>
+<script src="../games_resources/libs/three.js-87/build/three.js"></script>
+</head>
+<body>
+
+<script>
+	/*This function generates random value from -1 to 1.*/
+	function strangeFunc ()
+	{
+		var RetVar = Math.random();
+		if(Math.round(Math.random()) == 0)
+		{
+			return -1*RetVar;
+		}
+		return RetVar;
+	}
+
+	function controlSphereMoving()
+	{
+		SphereMesh.position.add(PointsAndDirectionsArray[ControlInfo.CurrentPointAndDirectionIndex]["Direction"]);
+		LenVector.copy(PointsAndDirectionsArray[ControlInfo.TargetPointAndDirectionIndex]["PointMesh"].position);
+
+//		Camera.position.copy(SphereMesh.position);
+//		Camera.position.addScalar(200, 200, 0);
+		Camera.lookAt(PointsAndDirectionsArray[ControlInfo.TargetPointAndDirectionIndex]["PointMesh"].position);
+		LenVector.sub(SphereMesh.position);
+		if(LenVector.length() < 2)
+		{
+			SphereMesh.position.copy(PointsAndDirectionsArray[ControlInfo.TargetPointAndDirectionIndex]["PointMesh"].position);
+			ControlInfo.CurrentPointAndDirectionIndex = ControlInfo.TargetPointAndDirectionIndex;
+			if(ControlInfo.TargetPointAndDirectionIndex === PointsAndDirectionsArray.length-1)
+				ControlInfo.TargetPointAndDirectionIndex = 0;
+			else
+				ControlInfo.TargetPointAndDirectionIndex++;
+			InfoDiv.innerText = "Moving: " + ControlInfo.CurrentPointAndDirectionIndex + " => " + ControlInfo.TargetPointAndDirectionIndex + " .";
+		}
+	};
+
+	var InfoDiv = document.createElement("div");
+	InfoDiv.style.position = "absolute";
+	InfoDiv.style.left = "50px";
+	InfoDiv.style.top = "50px";
+	InfoDiv.innerText =  "Moving: 0 => 1 .";
+	InfoDiv.style.zIndex = "10";
+	document.body.appendChild(InfoDiv);
+
+	var LenVector = new THREE.Vector3();
+
+	var ControlInfo = {
+		CurrentPointAndDirectionIndex: 0,
+		TargetPointAndDirectionIndex: 1
+	};
+	var PointAndDirection = {
+		PointMesh: null,
+		Direction: null 
+	};
+
+	var Container = document.createElement("div");
+	Container.style.height = window.innerHeight+"px";
+	Container.style.width = window.innerWidth + "px";
+
+	document.body.appendChild(Container);
+	var Renderer = new THREE.WebGLRenderer();
+	Renderer.setSize(window.innerWidth, window.innerHeight);
+	Container.appendChild(Renderer.domElement);
+
+	var Camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 1, 2000);
+	var Scene = new THREE.Scene();
+
+	var Geometry = new THREE.SphereGeometry(30, 32, 32);
+	var Material = new THREE.MeshBasicMaterial({color: 0xff00ff});
+
+	var SphereMesh = new THREE.Mesh(Geometry, Material);
+
+	var Room = new THREE.Mesh(
+		new THREE.BoxBufferGeometry(1000, 1000, 1000), 
+		new THREE.MeshBasicMaterial({color :0xffffce, side: THREE.DoubleSide})
+	);
+
+	var PointsAndDirectionsArray = [];
+
+	for (var i=0; i<10; i++)
+	{
+		var Point = new THREE.Mesh(
+			new THREE.SphereGeometry(10, 32, 32),
+			new THREE.MeshBasicMaterial({color: 0x2194ce})
+		);
+		var [x,y,z] = [strangeFunc()*Room.geometry.parameters.width/2, 
+					   strangeFunc()*Room.geometry.parameters.width/2, 
+					   strangeFunc()*Room.geometry.parameters.width/2
+					  ];
+
+		Point.position.set(x,y,z);
+		Scene.add(Point);
+
+		var pad = {};
+		/*Copying object PointAndDirection to pad*/
+		Object.assign(pad, PointAndDirection);
+		PointsAndDirectionsArray.push(pad);
+		PointsAndDirectionsArray[i].PointMesh = Point;
+	}
+
+	for(var i=0; i<PointsAndDirectionsArray.length; i++)
+	{
+		if(i === PointsAndDirectionsArray.length-1)
+		{
+			PointsAndDirectionsArray[i]["Direction"] = PointsAndDirectionsArray[0]["PointMesh"].position.clone();
+			PointsAndDirectionsArray[i]["Direction"].sub(PointsAndDirectionsArray[i]["PointMesh"].position);
+			PointsAndDirectionsArray[i]["Direction"].normalize();
+			break;
+		} else
+		{
+			PointsAndDirectionsArray[i]["Direction"] = PointsAndDirectionsArray[i+1]["PointMesh"].position.clone();
+			PointsAndDirectionsArray[i]["Direction"].sub(PointsAndDirectionsArray[i]["PointMesh"].position);
+			PointsAndDirectionsArray[i]["Direction"].normalize();			
+		}
+
+	};
+
+	Scene.add(Room);
+	Scene.add(SphereMesh);
+	Scene.add(Camera);
+
+	Camera.position.set(0,0, 200);
+
+	var updatableFuncs = [controlSphereMoving];
+
+	SphereMesh = Camera;
+	SphereMesh.position.copy(PointsAndDirectionsArray[0]["PointMesh"].position);
+
+	function animate(time) {
+
+		updatableFuncs.every(function (funcname){
+			funcname();
+		});
+
+		Renderer.render(Scene, Camera);
+		requestAnimationFrame(animate);
+	}
+	animate();
+</script>
+</body>
+</html>
